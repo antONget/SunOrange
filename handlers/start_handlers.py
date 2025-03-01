@@ -63,7 +63,7 @@ async def get_fullname(message: Message, state: FSMContext, bot: Bot):
     logging.info('get_fullname')
     fullname = message.text
     await state.update_data(fullname=fullname)
-    await message.answer(text=f'Приятно познакомится, {fullname}. В какую страну вы бы хотели отправиться?')
+    await message.answer(text=f'Приятно познакомится, {fullname}. В какую страну (страны) вы бы хотели отправиться?')
     await state.set_state(StateOrder.country_state)
 
 
@@ -73,14 +73,25 @@ async def get_country(message: Message, state: FSMContext, bot: Bot):
     logging.info('get_country')
     country_input: str = message.text
     list_countries: list = await method_get_countries()
+    list_country_input = country_input.replace(',', ' ').split(' ')
+    # if ',' in country_input:
+    #     list_country_input = country_input.split(',')
+    # elif 'и' in country_input:
+    #     list_country_input = country_input.split('и')
+    #     print(list_country_input)
+    # elif 'или' in country_input:
+    #     list_country_input = country_input.split('или')
     for i, country in list_countries:
-        if country.lower() == country_input.lower():
-            await message.answer(text=f'Прекрасный выбор! Каком городе в стране <b>{country}</b>'
-                                      f' вы хотели бы остановиться?')
-            await state.set_state(StateOrder.city_state)
-            await state.update_data(countries=country)
-            await state.update_data(country_id=i)
-            break
+        print('#', i, country)
+        for country_ in list_country_input:
+            print('##', country_)
+            if country_.lower() == country.lower():
+                await message.answer(text=f'Прекрасный выбор! Каком городе в стране <b>{country_.capitalize()}</b>'
+                                          f' вы хотели бы остановиться?')
+                await state.set_state(StateOrder.city_state)
+                await state.update_data(countries=country_input)
+                await state.update_data(country_id=i)
+                return
     else:
         await message.answer(text=f'К сожалению в <b>{country_input}</b> мы туры не предоставляем. Укажите другую страну')
 
@@ -101,18 +112,23 @@ async def get_data_department(message: Message, state: FSMContext, bot: Bot):
     logging.info('get_data_department')
     data_department_input = message.text
     split = '-'
-    if '.' in data_department_input:
-        split = '.'
-    if validate_date_format(date=data_department_input, split=split):
+    if '-' in data_department_input:
         data_department_ = f'{data_department_input.split("-")[-1]}-' \
                            f'{data_department_input.split("-")[1]}-' \
                            f'{data_department_input.split("-")[0]}'
         await state.update_data(data_department=data_department_)
+    if '.' in data_department_input:
+        split = '.'
+        data_department_ = f'{data_department_input.split(".")[-1]}-' \
+                           f'{data_department_input.split(".")[1]}-' \
+                           f'{data_department_input.split(".")[0]}'
+        await state.update_data(data_department=data_department_)
+    if validate_date_format(date=data_department_input, split=split):
         hotel_types_list = ['1*', '2*', '3*', '4*', '5*', '5+*', 'Apts', 'Villa']
         await message.answer(text='Выберите тип отеля',
                              reply_markup=keyboard_hotel_types(hotel_types=hotel_types_list))
     else:
-        await message.answer(text=f'Дата введена некорректно. Формат даты: дд-мм-гггг')
+        await message.answer(text=f'Дата введена некорректно. Формат даты: дд.мм.гггг (или дд-мм-гггг)')
 
 
 @router.callback_query(F.data.startswith('hotel'))
@@ -245,7 +261,8 @@ async def process_office(callback: CallbackQuery, state: FSMContext, bot: Bot):
             "tourist_child_count": data['age_kids'],
             "budget": int(data['budget']),
             "u_phone_mobile": data['phone'],
-            "r_co_id": id_office
+            "r_co_id": id_office,
+            "u_note": data['countries']
         }
         await method_post_lead(format_dict=format_dict_)
         format_dict_ = {

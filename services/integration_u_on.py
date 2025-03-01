@@ -19,7 +19,9 @@ async def method_get_company_office() -> list:
     _format = 'json'
     url = f'https://api.u-on.ru/{key}/company-office.{_format}'
     response = requests.get(url=url, verify=False)
-    return [[office['id'], office['name']] for office in response.json()['records']]
+    list_office = [[office['id'], office['name']] for office in response.json()['records']
+                   if 'SUN ORANGE' in office['name']]
+    return list_office
 
 
 async def method_post_lead(format_dict: dict) -> None:
@@ -95,22 +97,3 @@ async def method_post_lead(format_dict: dict) -> None:
 if __name__ == '__main__':
     # asyncio.run(method_add_request(format_dict=format_dict_))
     asyncio.run(method_get_company_office())
-
-
-# import requests
-#
-# # URL API
-# url = 'https://api.u-on.ru/1ga3bkGsm1km4/lead/create.json'
-#
-# # Данные, которые собираемся отправить
-# data = {
-#     'source': 'заявка с сайта',
-#     'u_name': input('Введите имя: '),  # Получаем имя от пользователя
-#     'u_phone': input('Введите телефон: ')  # Получаем телефон от пользователя
-# }
-#
-# # Выполняем POST-запрос
-# response = requests.post(url, data=data, verify=False)
-#
-# # Печатаем ответ от сервера
-# print(response.text)
