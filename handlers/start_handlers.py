@@ -12,7 +12,7 @@ from utils.error_handling import error_handler
 from utils.send_phone_contact import request_contact, get_phone_user
 from utils.utils_keybords import utils_handler_pagination_and_select_item
 from services.integration_u_on import method_get_countries, method_get_company_office, method_post_lead
-from filter.filter import validate_date_birthday
+from filter.filter import validate_date_format
 from keyboards.start_keyboard import keyboard_hotel_types, keyboard_nutrition
 
 config: Config = load_config()
@@ -71,11 +71,12 @@ async def get_fullname(message: Message, state: FSMContext, bot: Bot):
 @error_handler
 async def get_country(message: Message, state: FSMContext, bot: Bot):
     logging.info('get_country')
-    country_input = message.text
+    country_input: str = message.text
     list_countries: list = await method_get_countries()
     for i, country in list_countries:
-        if country == country_input:
-            await message.answer(text=f'Прекрасный выбор! Каком городе в стране <b>{country}</b> вы хотели бы остановиться?')
+        if country.lower() == country_input.lower():
+            await message.answer(text=f'Прекрасный выбор! Каком городе в стране <b>{country}</b>'
+                                      f' вы хотели бы остановиться?')
             await state.set_state(StateOrder.city_state)
             await state.update_data(countries=country)
             await state.update_data(country_id=i)
@@ -90,7 +91,7 @@ async def get_city(message: Message, state: FSMContext, bot: Bot):
     logging.info('get_city')
     city_input = message.text
     await state.update_data(city=city_input)
-    await message.answer(text=f'Укажите желаемую дату вылета. Формат даты: дд-мм-гггг')
+    await message.answer(text=f'Укажите желаемую дату вылета. Формат даты: дд.мм.гггг (или дд-мм-гггг)')
     await state.set_state(StateOrder.data_department_state)
 
 
@@ -99,9 +100,14 @@ async def get_city(message: Message, state: FSMContext, bot: Bot):
 async def get_data_department(message: Message, state: FSMContext, bot: Bot):
     logging.info('get_data_department')
     data_department_input = message.text
-    data_department_ = f'{data_department_input.split("-")[-1]}-{data_department_input.split("-")[1]}-{data_department_input.split("-")[0]}'
-    await state.update_data(data_department=data_department_)
-    if validate_date_birthday(data_department_input):
+    split = '-'
+    if '.' in data_department_input:
+        split = '.'
+    if validate_date_format(date=data_department_input, split=split):
+        data_department_ = f'{data_department_input.split("-")[-1]}-' \
+                           f'{data_department_input.split("-")[1]}-' \
+                           f'{data_department_input.split("-")[0]}'
+        await state.update_data(data_department=data_department_)
         hotel_types_list = ['1*', '2*', '3*', '4*', '5*', '5+*', 'Apts', 'Villa']
         await message.answer(text='Выберите тип отеля',
                              reply_markup=keyboard_hotel_types(hotel_types=hotel_types_list))
@@ -122,7 +128,7 @@ async def get_hotel_types(callback: CallbackQuery, state: FSMContext, bot: Bot):
 
 @router.callback_query(F.data.startswith('nutrition'))
 @error_handler
-async def get_hotel_types(callback: CallbackQuery, state: FSMContext, bot: Bot):
+async def get_nutrition(callback: CallbackQuery, state: FSMContext, bot: Bot):
     logging.info('get_hotel_types')
     nutrition = callback.data.split('_')[-1]
     await state.update_data(nutrition=nutrition)

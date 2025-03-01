@@ -17,18 +17,30 @@ def validate_russian_phone_number(phone_number: str) -> bool:
     return bool(match)
 
 
-def validate_date_birthday(date: str) -> bool:
+def validate_date_format(date: str, split: str) -> bool | list:
     """
     Валидация на формат даты дд-мм-гггг
     :param date:
+    :param split:
     :return:
     """
     logging.info('validate_date_birthday')
     # Паттерн для даты рождения дд-мм-гггг
-    pattern = re.compile(r'\b(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-([0-9]{4})\b')
-    # Проверка соответствия паттерну
-    match = pattern.match(date)
-    return bool(match)
+    if split == '-':
+        pattern = re.compile(r'\b(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-([0-9]{4})\b')
+        match = pattern.match(date)
+        if bool(match):
+            return date.split('-')
+        else:
+            return False
+    elif split == '.':
+        pattern = re.compile(r'\b(0[1-9]|[12][0-9]|3[01]).(0[1-9]|1[0-2]).([0-9]{4})\b')
+        match = pattern.match(date)
+        if bool(match):
+            return date.split('.')
+        else:
+            return False
+
 
 
 def validate_email(email: str):
