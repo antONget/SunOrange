@@ -44,7 +44,7 @@ async def get_phone_user(message: Message, state: FSMContext, bot: Bot) -> None:
     else:
         phone = message.text
     if not validate_russian_phone_number(phone):
-        await bot.send_message(text="Неверный формат номера, повторите ввод.")
+        await message.answer(text="Неверный формат номера, повторите ввод.")
         return
     else:
         return phone
