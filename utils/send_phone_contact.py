@@ -25,7 +25,7 @@ async def request_contact(message: Message, state: FSMContext, bot: Bot) -> None
     :return:
     """
     logging.info(f'get_personal_account: {message.chat.id}')
-    await message.answer(text=f'Укажите ваш номер телефона, можете воспользоваться кнопкой'
+    await message.answer(text=f'Укажите ваш номер телефона в международном формате: +7хххххххххх, можете воспользоваться кнопкой'
                               f' "Поделиться ☎️" расположенной ниже 👇',
                          reply_markup=keyboards_get_contact())
 
@@ -44,7 +44,7 @@ async def get_phone_user(message: Message, state: FSMContext, bot: Bot) -> None:
     else:
         phone = message.text
     if not validate_russian_phone_number(phone):
-        await message.answer(text="Неверный формат номера, повторите ввод.")
+        await message.answer(text="Неверный формат номера, повторите ввод международном формате: +7хххххххххх.")
         return
     else:
         return phone
